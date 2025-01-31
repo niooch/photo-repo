@@ -1,0 +1,10 @@
+#latex
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+#react
+node_modules
