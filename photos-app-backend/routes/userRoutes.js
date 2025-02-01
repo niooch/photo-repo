@@ -2,12 +2,21 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
+const { verifyToken } = require('../controllers/authMiddleware');
 
-// Przykładowa trasa - pobranie wszystkich użytkowników
-router.get('/', userController.getAllUsers);
+//testowe -- zwroc wszystkich uzytkownikow
+router.get('/test-db', userController.getAllUsers);
 
-// Dodajemy kolejne (rejestracja, logowanie itp.)
-// router.post('/register', userController.registerUser);
-// router.post('/login', userController.loginUser);
+//trasa do rejestracji uzytkownika
+router.post('/register', userController.registerUser);
+
+//trasa do logowania uzytkownika
+router.post('/login', userController.loginUser);
+
+/* -------------------------- zalogowany uzytkownik -------------------------- */
+router.get('/profile', verifyToken, (req, res) => {
+  // req.user tu jest obiektem z tokenu
+  return res.json({ message: 'Welcome to your profile!', user: req.user });
+});
 
 module.exports = router;
