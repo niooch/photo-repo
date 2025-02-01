@@ -1,0 +1,92 @@
+-- stowrzenie databasy
+CREATE DATABASE IF NOT EXISTS photos_app
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
+USE photos_app;
+
+--tworzenie tabel
+CREATE TABLE IF NOT EXISTS `User` (
+  `user_id` INT AUTO_INCREMENT PRIMARY KEY,
+  `username` VARCHAR(30) NOT NULL UNIQUE,
+  `password_hash` VARCHAR(255) NOT NULL,
+  `email` VARCHAR(255) NOT NULL UNIQUE,
+  `role` ENUM('admin','user') DEFAULT 'user'
+) ENGINE = InnoDB;
+
+
+CREATE TABLE IF NOT EXISTS `Device` (
+  `device_id` INT AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT NOT NULL,
+  `device_name` VARCHAR(50),
+  `device_type` ENUM('kamera','aparat','smartfon','inny') DEFAULT 'inny',
+  CONSTRAINT `fk_device_user`
+    FOREIGN KEY (`user_id`) REFERENCES `User`(`user_id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `Photo` (
+  `photo_id` INT AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT NOT NULL,
+  `device_id` INT NULL,
+  `photo_path` VARCHAR(255),
+  `upload_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `description` TEXT,
+  CONSTRAINT `fk_photo_user`
+    FOREIGN KEY (`user_id`) REFERENCES `User`(`user_id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_photo_device`
+    FOREIGN KEY (`device_id`) REFERENCES `Device`(`device_id`)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `Tag` (
+  `tag_id` INT AUTO_INCREMENT PRIMARY KEY,
+  `tag_name` VARCHAR(50) NOT NULL UNIQUE
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `PhotoTag` (
+  `photo_id` INT NOT NULL,
+  `tag_id` INT NOT NULL,
+  PRIMARY KEY (`photo_id`, `tag_id`),
+  CONSTRAINT `fk_phototag_photo`
+    FOREIGN KEY (`photo_id`) REFERENCES `Photo`(`photo_id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_phototag_tag`
+    FOREIGN KEY (`tag_id`) REFERENCES `Tag`(`tag_id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `Album` (
+  `album_id` INT AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT NOT NULL,
+  `album_name` VARCHAR(50),
+  CONSTRAINT `fk_album_user`
+    FOREIGN KEY (`user_id`) REFERENCES `User`(`user_id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `AlbumPhoto` (
+  `album_id` INT NOT NULL,
+  `photo_id` INT NOT NULL,
+  PRIMARY KEY (`album_id`, `photo_id`),
+  CONSTRAINT `fk_albumphoto_album`
+    FOREIGN KEY (`album_id`) REFERENCES `Album`(`album_id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_albumphoto_photo`
+    FOREIGN KEY (`photo_id`) REFERENCES `Photo`(`photo_id`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE = InnoDB;
+
+-- aby wyswietlic tabele nalezy
+SHOW TABLES;
+DESCRIBE `User`;
+DESCRIBE `Device`;
+-- ... i tak dalej

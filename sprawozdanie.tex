@@ -71,7 +71,7 @@ Ze względu na potrzeby aplikacji: różne poziomy dostępu, planuję wyodrębni
 \subsection{Użyte Technologie}
 \begin{itemize}
     \item \textbf{Frontend:} HTML, CSS, JavaScript, React.js
-    \item \textbf{Backend:}
+    \item \textbf{Backend:} Node.js, Express.js
     \item \textbf{Baza Danych:} MySQL
 \end{itemize}
 Chcąc użyć nowych technologii, frontend strony planuje zbudować w React.js, natomiast stronę czysto bazodanową przy użyciu MySQL. Do komunikacji między frontendem a bazą danych użyję Axios.
@@ -83,7 +83,7 @@ Chcąc użyć nowych technologii, frontend strony planuje zbudować w React.js, 
     \item \textbf{Użytkownik (User):} Przechowuje informacje o zarejestrowanych użytkownikach aplikacji.
     \item \textbf{Urządzenie (Device):} Reprezentuje urządzenie użytkownika, z którego ujęto zdjęcie.
     \item \textbf{Zdjęcie (Photo):} Zawiera metadane zdjęcia oraz ścieżkę do pliku z obrazem.
-    \item \textbf{Tag (Tag):} Przedstawiia kategorię lub słowo kluczowe, które można przypisać do wielu zdjęć.
+    \item \textbf{Tag (Tag):} Przedstawia kategorię lub słowo kluczowe, które można przypisać do wielu zdjęć.
     \item \textbf{ZdjęcieTag (PhotoTag):} Tabela łącząca, która obsługuje relację wiele do wielu między \texttt{Photo} i \texttt{Tag}.
     \item \textbf{Album (Album):} Logiczna grupa zdjęć. Jeden użytkownik może mieć wiele albumów, a jeden album może zawierać wiele zdjęć.
 \end{itemize}
@@ -100,7 +100,7 @@ Chcąc użyć nowych technologii, frontend strony planuje zbudować w React.js, 
 
 \subsection{Diagram ERD}
 \begin{center}
-    \includegraphics[width=0.8\textwidth]{erd.jpg}
+    \includegraphics[width=0.8\textwidth]{diagram.png}
     %\captionof{figure}{Diagram ER dla bazy danych.}
 \end{center}
 
@@ -293,6 +293,6 @@ Zdefiniowano dwa poziomy dostępu do bazy danych: \textbf{Administrator} oraz \t
 \end{itemize}
 
 \section{Podsumowanie}
-W powyższym dokumencie przedstawiono projekt bazy danych dla aplikacji webowej do przeglądania i zarządzania zdjęciami użytkowników. Zdefiniowano encje, związki między nimi, a także funkcje, procedury oraz triggery. Przedstawiono dowód spełnienia postaci 3NF oraz zabezpieczenia i uprawnienia dla poszczególnych rodzajów użytkowników.
+W powyższym dokumencie przedstawiłem projekt bazy danych dla aplikacji webowej do przeglądania i zarządzania zdjęciami użytkowników. Zdefiniowałem encje, związki między nimi, a także funkcje, procedury oraz triggery. Przedstawiłem dowód spełnienia postaci 3NF oraz zabezpieczenia i uprawnienia dla poszczególnych rodzajów użytkowników.
 
 \end{document}

@@ -8,3 +8,5 @@
 *.fdb_latexmk
 #react
 node_modules
+#konfiguracja bazy
+*.env
