@@ -33,6 +33,9 @@ router.post('/:photoId/tags', verifyToken, photoController.addTagToPhoto);
 // Endpoint: DELETE /api/photos/:photoId/tags/:tagId
 router.delete('/:photoId/tags/:tagId', verifyToken, photoController.removeTagFromPhoto);
 
+// Aktualizacja urządzenia przypisanego do zdjęcia
+router.put('/:photoId/device', verifyToken, photoController.updatePhotoDevice);
+
 
 
 

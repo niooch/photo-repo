@@ -186,7 +186,6 @@ exports.getPublicPhotos = async (req, res) => {
 };
 
 exports.addTagToPhoto = async (req, res) => {
-    console.log('addTagToPhoto', photoId, tagName);
   try {
     const { photoId } = req.params;
     const { tagName } = req.body;  // Oczekujemy, że w ciele żądania otrzymamy { "tagName": "nazwa" }
@@ -261,6 +260,33 @@ exports.removeTagFromPhoto = async (req, res) => {
       return res.status(404).json({ error: 'Tag not associated with this photo.' });
     }
     return res.json({ message: 'Tag removed from photo successfully.' });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+};
+
+exports.updatePhotoDevice = async (req, res) => {
+  try {
+    const { photoId } = req.params;
+    const { device_id } = req.body;  // oczekujemy np. { device_id: 3 }
+    const { userId, role } = req.user;
+
+    // Pobieramy zdjęcie, aby upewnić się, że istnieje
+    const [rows] = await pool.query('SELECT * FROM Photo WHERE photo_id = ?', [photoId]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Photo not found.' });
+    }
+    const photo = rows[0];
+
+    // Tylko właściciel zdjęcia lub admin może zmieniać urządzenie
+    if (role !== 'admin' && photo.user_id !== userId) {
+      return res.status(403).json({ error: 'Access denied.' });
+    }
+
+    // Aktualizacja zdjęcia – ustawienie device_id
+    await pool.query('UPDATE Photo SET device_id = ? WHERE photo_id = ?', [device_id, photoId]);
+    return res.json({ message: 'Photo updated with device successfully.' });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Internal server error.' });
