@@ -10,6 +10,9 @@ router.post('/', verifyToken, upload.array('photos', 10), photoController.create
 // GET list of photos (admin -> all, user -> only own, or all public? - zależnie od Twoich potrzeb)
 router.get('/', verifyToken, photoController.getPhotos);
 
+// GET publiczne zdjecia
+router.get('/public', photoController.getPublicPhotos);
+
 // GET by id
 router.get('/:photoId', verifyToken, photoController.getPhotoById);
 
@@ -22,8 +25,14 @@ router.delete('/:photoId', verifyToken, photoController.deletePhoto);
 // SET czy public
 router.put('/:photoId/public', verifyToken, photoController.setPhotoPublic);
 
-// GET publiczne zdjecia
-router.get('/public', photoController.getPublicPhotos);
+// Dodawanie tagu do zdjęcia
+// Endpoint: POST /api/photos/:photoId/tags
+router.post('/:photoId/tags', verifyToken, photoController.addTagToPhoto);
+
+// Usuwanie tagu ze zdjęcia
+// Endpoint: DELETE /api/photos/:photoId/tags/:tagId
+router.delete('/:photoId/tags/:tagId', verifyToken, photoController.removeTagFromPhoto);
+
 
 
 

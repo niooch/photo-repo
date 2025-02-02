@@ -6,7 +6,6 @@ const pool = require('./config/db');
 const userRoutes = require('./routes/userRoutes');
 const deviceRoutes = require('./routes/deviceRoutes');
 const photoRoutes = require('./routes/photoRoutes');
-const tagRoutes = require('./routes/tagRoutes');
 const albumRoutes = require('./routes/albumRoutes');
 
 const cors = require('cors');
@@ -20,7 +19,6 @@ app.use(express.json());
 app.use('/api/users', userRoutes);
 app.use('/api/devices', deviceRoutes);
 app.use('/api/photos', photoRoutes);
-app.use('/api/tags', tagRoutes);
 app.use('/api/albums', albumRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 

@@ -13,6 +13,8 @@ import DevicesPage from './pages/DevicesPage';
 import AlbumsPage from './pages/AlbumsPage';
 import AdminPanelPage from './pages/AdminPanelPage';
 import PublicPhotosPage from './pages/PublicPhotosPage';
+import PhotoDetailsPage from './pages/PhotoDetailsPage';
+import AlbumDetailsPage from './pages/AlbumDetailsPage';
 
 function App() {
   // Przechowujemy token + role w stanie
@@ -56,11 +58,13 @@ function App() {
         >
           {/* Wewnątrz Layoutu wyrenderują się podstrony w <Outlet/> */}
           <Route index element={<Dashboard />} />
+          <Route path="photos/:id" element={<PhotoDetailsPage />} />
           <Route path="public-photos" element={<PublicPhotosPage />} />
           <Route path="photos" element={<PhotosPage />} />
           <Route path="devices" element={<DevicesPage />} />
           <Route path="albums" element={<AlbumsPage />} />
           <Route path="admin" element={<AdminPanelPage role={role} />} />
+          <Route path="albums/:albumId" element={<AlbumDetailsPage />} />
         </Route>
 
         {/* Logowanie / Rejestracja mogą być poza Layoutem,

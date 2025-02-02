@@ -1,8 +1,13 @@
 import React from 'react';
 import { Card, CardMedia, CardContent, Typography, CardActions, Button } from '@mui/material';
 import axiosInstance from '../api/axiosInstance';
+import { useNavigate } from 'react-router-dom';
 
 function PhotoCard({ photo, onDeleteSuccess }) {
+  const navigate = useNavigate();
+  const handleClick = () => {
+    navigate(`/photos/${photo.photo_id}`);
+  };
   const handleDelete = async () => {
     try {
       await axiosInstance.delete(`/photos/${photo.photo_id}`);
@@ -28,7 +33,7 @@ function PhotoCard({ photo, onDeleteSuccess }) {
 
 
   return (
-    <Card>
+    <Card onClick={handleClick} sx={{ cursor: 'pointer' }}>
       <CardMedia
         component="img"
         height="200"

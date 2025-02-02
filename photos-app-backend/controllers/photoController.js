@@ -175,10 +175,94 @@ exports.setPhotoPublic = async (req, res) => {
 
 exports.getPublicPhotos = async (req, res) => {
   try {
+    //zapisz do konsoli zapytanie ze chce ktos public photos
+    console.log('GET /photos/public');
     const [rows] = await pool.query('SELECT * FROM Photo WHERE is_public = 1');
     return res.json(rows);
   } catch (error) {
     console.error(error);
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+};
+
+exports.addTagToPhoto = async (req, res) => {
+    console.log('addTagToPhoto', photoId, tagName);
+  try {
+    const { photoId } = req.params;
+    const { tagName } = req.body;  // Oczekujemy, że w ciele żądania otrzymamy { "tagName": "nazwa" }
+    const { userId, role } = req.user;
+    // Walidacja – nazwa tagu musi być podana
+    if (!tagName || tagName.trim() === '') {
+      return res.status(400).json({ error: 'Tag name is required.' });
+    }
+
+    // Sprawdzenie, czy zdjęcie istnieje
+    const [photoRows] = await pool.query('SELECT * FROM Photo WHERE photo_id = ?', [photoId]);
+    if (photoRows.length === 0) {
+      return res.status(404).json({ error: 'Photo not found.' });
+    }
+    const photo = photoRows[0];
+
+    // Sprawdzenie uprawnień – tylko właściciel zdjęcia lub admin może dodać tag
+    if (role !== 'admin' && photo.user_id !== userId) {
+      return res.status(403).json({ error: 'Access denied. You cannot tag photos that are not yours.' });
+    }
+
+    // Sprawdzenie, czy tag już istnieje
+    let [tagRows] = await pool.query('SELECT * FROM Tag WHERE tag_name = ?', [tagName]);
+    let tagId;
+    if (tagRows.length === 0) {
+      // Jeśli tag nie istnieje, tworzymy go
+      const [insertResult] = await pool.query('INSERT INTO Tag (tag_name) VALUES (?)', [tagName]);
+      tagId = insertResult.insertId;
+    } else {
+      tagId = tagRows[0].tag_id;
+    }
+
+    // Dodajemy relację w tabeli PhotoTag
+    try {
+      await pool.query('INSERT INTO PhotoTag (photo_id, tag_id) VALUES (?, ?)', [photoId, tagId]);
+    } catch (error) {
+      if (error.code === 'ER_DUP_ENTRY') {
+        return res.status(409).json({ error: 'Tag already assigned to this photo.' });
+      } else {
+        throw error;
+      }
+    }
+
+    return res.status(201).json({ message: 'Tag added to photo successfully.' });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+};
+
+exports.removeTagFromPhoto = async (req, res) => {
+  try {
+    console.log('removeTagFromPhoto');
+    const { photoId, tagId } = req.params;
+    const { userId, role } = req.user;
+
+    // Sprawdzenie, czy zdjęcie istnieje
+    const [photoRows] = await pool.query('SELECT * FROM Photo WHERE photo_id = ?', [photoId]);
+    if (photoRows.length === 0) {
+      return res.status(404).json({ error: 'Photo not found.' });
+    }
+    const photo = photoRows[0];
+
+    // Sprawdzenie uprawnień – tylko właściciel zdjęcia lub admin
+    if (role !== 'admin' && photo.user_id !== userId) {
+      return res.status(403).json({ error: 'Access denied.' });
+    }
+
+    // Usuwamy relację z tabeli PhotoTag
+    const [result] = await pool.query('DELETE FROM PhotoTag WHERE photo_id = ? AND tag_id = ?', [photoId, tagId]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Tag not associated with this photo.' });
+    }
+    return res.json({ message: 'Tag removed from photo successfully.' });
+  } catch (err) {
+    console.error(err);
     return res.status(500).json({ error: 'Internal server error.' });
   }
 };
