@@ -5,7 +5,7 @@ const photoController = require('../controllers/photoController');
 const upload = require('../config/multerConfig');
 
 // CREATE: upload zdjęcia
-router.post('/', verifyToken, upload.single('photo'), photoController.createPhoto);
+router.post('/', verifyToken, upload.array('photos', 10), photoController.createPhotos);
 
 // GET list of photos (admin -> all, user -> only own, or all public? - zależnie od Twoich potrzeb)
 router.get('/', verifyToken, photoController.getPhotos);
@@ -18,5 +18,14 @@ router.put('/:photoId', verifyToken, photoController.updatePhoto);
 
 // DELETE
 router.delete('/:photoId', verifyToken, photoController.deletePhoto);
+
+// SET czy public
+router.put('/:photoId/public', verifyToken, photoController.setPhotoPublic);
+
+// GET publiczne zdjecia
+router.get('/public', photoController.getPublicPhotos);
+
+
+
 
 module.exports = router;

@@ -51,7 +51,6 @@ exports.registerUser = async (req, res) => {
 
 //logowanie
 const jwt = require('jsonwebtoken');
-// ...
 exports.loginUser = async (req, res) => {
   try {
     const { usernameOrEmail, password } = req.body;
@@ -96,5 +95,55 @@ exports.loginUser = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal server error.' });
+  }
+};
+
+exports.getUserStats = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { role, userId: tokenUserId } = req.user;
+
+    // Sprawdzamy, czy user to admin lub właściciel statystyk
+    if (role !== 'admin' && parseInt(userId) !== tokenUserId) {
+      return res.status(403).json({ error: 'Access denied.' });
+    }
+
+    // liczba zdjęć
+    const [photoCount] = await pool.query('SELECT COUNT(*) as totalPhotos FROM Photo WHERE user_id = ?', [userId]);
+    // liczba albumów
+    const [albumCount] = await pool.query('SELECT COUNT(*) as totalAlbums FROM Album WHERE user_id = ?', [userId]);
+    // liczba publicznych zdjęć
+    const [publicCount] = await pool.query('SELECT COUNT(*) as totalPublicPhotos FROM Photo WHERE user_id = ? AND is_public = 1', [userId]);
+
+    return res.json({
+      totalPhotos: photoCount[0].totalPhotos,
+      totalAlbums: albumCount[0].totalAlbums,
+      totalPublicPhotos: publicCount[0].totalPublicPhotos
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+};
+
+exports.getLoggedUser = async (req, res) => {
+  try {
+    // Dane z tokena: userId, role, itp.
+    const { userId } = req.user;
+
+    // Pobierz z bazy informacji o tym użytkowniku
+    const [rows] = await pool.query(
+      'SELECT user_id, username, email, role FROM User WHERE user_id = ?',
+      [userId]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    // Zwracamy informacje
+    return res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Internal server error.' });
   }
 };

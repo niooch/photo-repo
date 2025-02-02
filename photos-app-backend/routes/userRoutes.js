@@ -19,4 +19,10 @@ router.get('/profile', verifyToken, (req, res) => {
   return res.json({ message: 'Welcome to your profile!', user: req.user });
 });
 
+//statystyki uzytkownika
+router.get('/:userId/stats', verifyToken, userController.getUserStats);
+
+//dane uzytkownika
+router.get('/me', verifyToken, userController.getLoggedUser);
+
 module.exports = router;

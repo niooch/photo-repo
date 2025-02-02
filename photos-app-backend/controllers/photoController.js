@@ -1,23 +1,30 @@
 // controllers/photoController.js
 const pool = require('../config/db');
 
-exports.createPhoto = async (req, res) => {
+exports.createPhotos = async (req, res) => {
   try {
     const userId = req.user.userId;
-    // multer przesyła plik w req.file
-    // np. req.file.path to ścieżka do zapisanego zdjęcia
-    if (!req.file) {
-      return res.status(400).json({ error: 'No photo file uploaded.' });
+
+    // req.files – tablica plików
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: 'No photo files uploaded.' });
     }
 
-    const { device_id, description } = req.body;
-    const photoPath = req.file.path; // np. "uploads/1675266567_photo.jpg"
+    // Jeżeli masz jedno wspólne pole "description"
+    // (zależy, czy wysyłasz w formData np. formData.append('description', opis))
+    const { description } = req.body;
 
-    // Wstawiamy do bazy
-    const sql = `INSERT INTO Photo (user_id, device_id, photo_path, description) VALUES (?,?,?,?)`;
-    await pool.query(sql, [userId, device_id || null, photoPath, description || null]);
+    // Wstawianie do bazy w pętli
+    for (const file of req.files) {
+      const photoPath = file.path;
+      // Zapis do bazy – prosty przykład
+      await pool.query(
+        `INSERT INTO Photo (user_id, photo_path, description) VALUES (?, ?, ?)`,
+        [userId, photoPath, description || null]
+      );
+    }
 
-    return res.status(201).json({ message: 'Photo uploaded successfully.' });
+    return res.status(201).json({ message: 'Photos uploaded successfully.' });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: 'Internal server error.' });
@@ -97,10 +104,54 @@ exports.updatePhoto = async (req, res) => {
   }
 };
 
+const fs = require('fs');
+const path = require('path');
+
 exports.deletePhoto = async (req, res) => {
   try {
-    const { role, userId } = req.user;
     const { photoId } = req.params;
+    const { role, userId } = req.user;
+
+    // Szukamy zdjęcia
+    const [rows] = await pool.query('SELECT * FROM Photo WHERE photo_id = ?', [photoId]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Photo not found.' });
+    }
+    const photo = rows[0];
+
+    // Sprawdzamy, czy user to admin lub właściciel zdjęcia
+    if (role !== 'admin' && photo.user_id !== userId) {
+      return res.status(403).json({ error: 'Access denied.' });
+    }
+
+    // Usuwamy rekord z bazy
+    await pool.query('DELETE FROM Photo WHERE photo_id = ?', [photoId]);
+
+    // Usuwamy fizyczny plik z dysku
+    // Ścieżka zapisana w photo.photo_path, np. "uploads/..."
+    const filePath = path.join(__dirname, '..', photo.photo_path);
+    // __dirname -> katalog controllers/, więc '..' wychodzi poziom wyżej
+    // Uwaga: sprawdź, czy musisz użyć innego łączenia ścieżek
+
+    fs.unlink(filePath, (err) => {
+      if (err) {
+        console.error('Failed to remove file from disk:', err);
+        // Możesz nadal zwrócić 200, bo sam rekord w bazie został usunięty
+      }
+    });
+
+    return res.json({ message: 'Photo deleted successfully.' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+};
+
+exports.setPhotoPublic = async (req, res) => {
+  try {
+    const { photoId } = req.params;
+    const { isPublic } = req.body; // np. { isPublic: true }
+    const { userId, role } = req.user;
 
     const [rows] = await pool.query('SELECT * FROM Photo WHERE photo_id = ?', [photoId]);
     if (rows.length === 0) {
@@ -108,20 +159,26 @@ exports.deletePhoto = async (req, res) => {
     }
     const photo = rows[0];
 
-    // Sprawdzamy dostęp
     if (role !== 'admin' && photo.user_id !== userId) {
       return res.status(403).json({ error: 'Access denied.' });
     }
 
-    // Usuwamy rekord
-    await pool.query('DELETE FROM Photo WHERE photo_id = ?', [photoId]);
+    // zmiana 1/0
+    await pool.query('UPDATE Photo SET is_public = ? WHERE photo_id = ?', [isPublic ? 1 : 0, photoId]);
 
-    // (Opcjonalnie) Usuwamy plik z dysku, np. fs.unlinkSync(photo.photo_path)
-    // ale to już kwestia dodatkowego zaimplementowania
-
-    return res.json({ message: 'Photo deleted successfully.' });
+    return res.json({ message: 'Photo visibility updated.' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal server error.' });
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+};
+
+exports.getPublicPhotos = async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM Photo WHERE is_public = 1');
+    return res.json(rows);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal server error.' });
   }
 };
