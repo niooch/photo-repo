@@ -151,12 +151,16 @@ function PhotoDetailsPage() {
 
       {/* Wyświetlanie albumu, do którego należy zdjęcie */}
       <Box sx={{ mt: 4 }}>
-        <Typography variant="h6">Album:</Typography>
-        {photoData.album ? (
-          <Typography variant="body1">{photoData.album.album_name}</Typography>
-        ) : (
-          <Typography variant="body2">Not assigned to any album</Typography>
-        )}
+          <Typography variant="h6">Albumy:</Typography>
+          {photoData.albums && photoData.albums.length > 0 ? (
+            photoData.albums.map(album => (
+              <Typography key={album.album_id} variant="body1">
+                {album.album_name}
+              </Typography>
+            ))
+          ) : (
+            <Typography variant="body2">Nie przypisano do żadnego albumu</Typography>
+          )}
       </Box>
 
       {/* Sekcja dodania zdjęcia do albumu */}

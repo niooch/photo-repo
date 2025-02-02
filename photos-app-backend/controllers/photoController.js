@@ -57,21 +57,61 @@ exports.getPhotoById = async (req, res) => {
     const { role, userId } = req.user;
     const { photoId } = req.params;
 
-    const [rows] = await pool.query('SELECT * FROM Photo WHERE photo_id = ?', [photoId]);
-    if (rows.length === 0) {
+    // Pobranie podstawowych danych zdjęcia
+    const [photoRows] = await pool.query(
+      'SELECT * FROM Photo WHERE photo_id = ?',
+      [photoId]
+    );
+    if (photoRows.length === 0) {
       return res.status(404).json({ error: 'Photo not found.' });
     }
-    const photo = rows[0];
+    const photo = photoRows[0];
 
-    // Sprawdzamy dostęp
+    // Sprawdzenie uprawnień – użytkownik musi być właścicielem lub być adminem
     if (role !== 'admin' && photo.user_id !== userId) {
       return res.status(403).json({ error: 'Access denied.' });
     }
 
-    return res.json(photo);
+    // Pobranie tagów przypisanych do zdjęcia
+    const [tagRows] = await pool.query(
+      `SELECT t.tag_id, t.tag_name
+       FROM PhotoTag pt
+       JOIN Tag t ON pt.tag_id = t.tag_id
+       WHERE pt.photo_id = ?`,
+      [photoId]
+    );
+
+    // Pobranie albumów, do których przypisane jest zdjęcie (może być więcej niż jeden)
+    const [albumRows] = await pool.query(
+      `SELECT a.album_id, a.album_name
+       FROM AlbumPhoto ap
+       JOIN Album a ON ap.album_id = a.album_id
+       WHERE ap.photo_id = ?`,
+      [photoId]
+    );
+
+    // Pobranie danych urządzenia, jeśli zdjęcie ma ustawione device_id
+    let device = null;
+    if (photo.device_id) {
+      const [deviceRows] = await pool.query(
+        'SELECT device_id, device_name, device_type FROM Device WHERE device_id = ?',
+        [photo.device_id]
+      );
+      if (deviceRows.length > 0) {
+        device = deviceRows[0];
+      }
+    }
+
+    // Zwracamy obiekt łączący wszystkie dane
+    return res.json({
+      ...photo,        // pola zdjęcia (photo_id, photo_path, description, user_id, device_id, itd.)
+      tags: tagRows,   // tablica tagów
+      albums: albumRows, // tablica albumów (może być pusta, jeśli zdjęcie nie jest przypisane do żadnego albumu)
+      device: device   // obiekt urządzenia lub null
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal server error.' });
+    return res.status(500).json({ error: 'Internal server error.' });
   }
 };
 
