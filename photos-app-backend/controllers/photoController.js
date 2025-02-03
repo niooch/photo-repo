@@ -332,3 +332,37 @@ exports.updatePhotoDevice = async (req, res) => {
     return res.status(500).json({ error: 'Internal server error.' });
   }
 };
+
+exports.uploadPhotoUsingProcedure = async (req, res) => {
+  try {
+    const { userId } = req.user; // pobierane z tokena przez middleware
+    const { device_id, description } = req.body;
+    const photoPath = req.file.path; // zakładając, że korzystasz z multer
+
+    // Wywołujemy procedurę UploadPhoto
+    // Używamy CALL UploadPhoto(p_user_id, p_device_id, p_photo_path, p_description)
+    const [result] = await pool.query(
+      'CALL UploadPhoto(?, ?, ?, ?)',
+      [userId, device_id || null, photoPath, description]
+    );
+
+    return res.status(201).json({ message: 'Photo uploaded successfully using procedure.' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+};
+
+exports.getUserStatsUsingProcedure = async (req, res) => {
+  try {
+    const { userId } = req.params;  // ID użytkownika, dla którego chcesz pobrać statystyki
+    const [rows] = await pool.query('CALL GetUserStats(?)', [userId]);
+
+    // W zależności od sposobu zwracania danych przez procedurę,
+    // wynik może być opakowany w dodatkową strukturę – warto to przetestować.
+    return res.json(rows[0]); // zakładamy, że statystyki są w pierwszym zestawie wyników
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+};
